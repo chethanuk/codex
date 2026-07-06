@@ -3328,6 +3328,12 @@
             "null"
           ]
         },
+        "description": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
         "properties": {
           "additionalProperties": {
             "$ref": "#/definitions/McpElicitationPrimitiveSchema"
@@ -3341,6 +3347,12 @@
           "type": [
             "array",
             "null"
+          ]
+        },
+        "title": {
+          "type": [
+            "null",
+            "string"
           ]
         },
         "type": {

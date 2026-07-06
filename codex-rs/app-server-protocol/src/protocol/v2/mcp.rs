@@ -325,6 +325,12 @@ pub struct McpElicitationSchema {
     #[serde(rename = "type")]
     #[ts(rename = "type")]
     pub type_: McpElicitationObjectType,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub title: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub description: Option<String>,
     pub properties: BTreeMap<String, McpElicitationPrimitiveSchema>,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[ts(optional)]

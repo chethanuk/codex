@@ -2007,6 +2007,8 @@ fn mcp_elicitation_schema_matches_mcp_2025_11_25_primitives() {
     let schema: McpElicitationSchema = serde_json::from_value(json!({
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
+        "title": "ScalarElicitationType",
+        "description": "Pick the report options.",
         "properties": {
             "email": {
                 "type": "string",
@@ -2047,6 +2049,8 @@ fn mcp_elicitation_schema_matches_mcp_2025_11_25_primitives() {
         McpElicitationSchema {
             schema_uri: Some("https://json-schema.org/draft/2020-12/schema".to_string()),
             type_: McpElicitationObjectType::Object,
+            title: Some("ScalarElicitationType".to_string()),
+            description: Some("Pick the report options.".to_string()),
             properties: BTreeMap::from([
                 (
                     "confirmed".to_string(),
