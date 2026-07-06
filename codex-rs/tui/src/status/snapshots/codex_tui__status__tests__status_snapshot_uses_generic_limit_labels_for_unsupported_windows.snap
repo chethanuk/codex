@@ -18,7 +18,7 @@ expression: sanitized
 │  Token usage:             1.2K total  (800 input + 400 output)               │
 │  Context window:          100% left (1.2K used / 272K)                       │
 │  Usage limit:             [█████████████░░░░░░░] 65% left                    │
-│                           (resets 07:08 on 7 May)                            │
+│                           (resets 07:08 on 7 May, in 1d 0h)                  │
 │  Secondary usage limit:   [██████████░░░░░░░░░░] 50% left                    │
-│                           (resets 07:08 on 8 May)                            │
+│                           (resets 07:08 on 8 May, in 2d 0h)                  │
 ╰──────────────────────────────────────────────────────────────────────────────╯

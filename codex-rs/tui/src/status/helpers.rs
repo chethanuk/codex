@@ -3,6 +3,7 @@ use crate::legacy_core::config::Config;
 use crate::status::StatusAccountDisplay;
 use crate::text_formatting;
 use chrono::DateTime;
+use chrono::Duration as ChronoDuration;
 use chrono::Local;
 use codex_protocol::account::PlanType;
 use codex_utils_path_uri::PathConvention;
@@ -174,11 +175,41 @@ pub(crate) fn format_directory_display(directory: &Path, max_width: Option<usize
 
 pub(crate) fn format_reset_timestamp(dt: DateTime<Local>, captured_at: DateTime<Local>) -> String {
     let time = dt.format("%H:%M").to_string();
-    if dt.date_naive() == captured_at.date_naive() {
+    let timestamp = if dt.date_naive() == captured_at.date_naive() {
         time
     } else {
         format!("{time} on {}", dt.format("%-d %b"))
+    };
+    // Show a countdown alongside the wall-clock reset time so users can tell how long they have to
+    // wait without doing the arithmetic themselves (issue #31109). The countdown is relative to
+    // `captured_at` (when the rate-limit snapshot was fetched), so it reflects the remaining wait as
+    // of that capture rather than ticking down live while the panel stays open.
+    match format_reset_countdown(dt.signed_duration_since(captured_at)) {
+        Some(countdown) => format!("{timestamp}, {countdown}"),
+        None => timestamp,
     }
+}
+
+/// Formats the time remaining until a reset as a compact `in Xd Yh` / `in Xh Ym` / `in Xm` string.
+/// When days or hours are present the next-smaller unit is always shown, even when it is zero (e.g.
+/// `in 1d 0h`, `in 2h 0m`); minutes-only durations render as just `in Xm`. Returns `None` when the
+/// reset is already due (or less than a minute away), so callers fall back to the timestamp alone.
+fn format_reset_countdown(remaining: ChronoDuration) -> Option<String> {
+    let total_minutes = remaining.num_minutes();
+    if total_minutes <= 0 {
+        return None;
+    }
+    let days = remaining.num_days();
+    let hours = remaining.num_hours() % 24;
+    let minutes = total_minutes % 60;
+    let text = if days > 0 {
+        format!("in {days}d {hours}h")
+    } else if hours > 0 {
+        format!("in {hours}h {minutes}m")
+    } else {
+        format!("in {minutes}m")
+    };
+    Some(text)
 }
 
 fn title_case(s: &str) -> String {
@@ -229,6 +260,41 @@ mod tests {
 
         for (plan_type, expected) in cases {
             assert_eq!(plan_type_display_name(plan_type), expected);
+        }
+    }
+
+    #[test]
+    fn format_reset_timestamp_appends_countdown() {
+        use chrono::TimeZone;
+
+        let captured_at = Local
+            .with_ymd_and_hms(/* year */ 2024, /* month */ 1, /* day */ 2, /* hour */ 3, /* min */ 4, /* sec */ 5)
+            .single()
+            .expect("captured timestamp");
+
+        // (offset from captured_at, expected rendered reset string).
+        let cases = [
+            // Minutes-only countdown, same day.
+            (ChronoDuration::minutes(30), "03:34, in 30m"),
+            // Hours + minutes countdown, same day.
+            (ChronoDuration::seconds(8_100), "05:19, in 2h 15m"),
+            // Days + hours countdown crosses into a later day, so the date is shown too.
+            (ChronoDuration::seconds(388_800), "15:04 on 6 Jan, in 4d 12h"),
+            // Exactly one day resolves hours to zero rather than dropping the unit.
+            (ChronoDuration::seconds(86_400), "03:04 on 3 Jan, in 1d 0h"),
+            // Less than a minute away: omit the countdown, keep only the timestamp.
+            (ChronoDuration::seconds(45), "03:04"),
+            // Reset already in the past: omit the countdown.
+            (ChronoDuration::minutes(-10), "02:54"),
+        ];
+
+        for (offset, expected) in cases {
+            let reset = captured_at + offset;
+            assert_eq!(
+                format_reset_timestamp(reset, captured_at),
+                expected,
+                "offset {offset:?}"
+            );
         }
     }
 
