@@ -75,6 +75,37 @@ fn parses_config_isolation_flags() {
 }
 
 #[test]
+fn image_flag_does_not_swallow_positional_prompt() {
+    // Regression for #30106: `--image <file> "<prompt>"` must not slurp the prompt.
+    let cli = Cli::parse_from(["codex-exec", "--image", "foo.png", "describe this"]);
+
+    assert_eq!(cli.prompt.as_deref(), Some("describe this"));
+    assert_eq!(cli.images, vec![PathBuf::from("foo.png")]);
+}
+
+#[test]
+fn image_flag_comma_delimiter_yields_multiple_images() {
+    let cli = Cli::parse_from(["codex-exec", "-i", "a.png,b.png", "describe this"]);
+
+    assert_eq!(cli.prompt.as_deref(), Some("describe this"));
+    assert_eq!(
+        cli.images,
+        vec![PathBuf::from("a.png"), PathBuf::from("b.png")]
+    );
+}
+
+#[test]
+fn repeated_image_flag_yields_multiple_images() {
+    let cli = Cli::parse_from(["codex-exec", "-i", "a.png", "-i", "b.png", "describe this"]);
+
+    assert_eq!(cli.prompt.as_deref(), Some("describe this"));
+    assert_eq!(
+        cli.images,
+        vec![PathBuf::from("a.png"), PathBuf::from("b.png")]
+    );
+}
+
+#[test]
 fn removed_full_auto_flag_reports_migration_path() {
     let cli = Cli::parse_from(["codex-exec", "--full-auto", "summarize"]);
 
