@@ -656,6 +656,8 @@ mod tests {
                     requested_schema: McpElicitationSchema {
                         schema_uri: None,
                         type_: McpElicitationObjectType::Object,
+                        title: None,
+                        description: None,
                         properties: BTreeMap::new(),
                         required: None,
                     },
